@@ -12,7 +12,6 @@ const Register = () => {
     setEmail("");
     setPassword("");
     setPassword2("");
-    setError(null);
   };
 
   const onSubmit = async (e) => {
@@ -37,6 +36,8 @@ const Register = () => {
       if (error.code === "auth/email-already-in-use") {
         setError("Email already in use");
         resetForm();
+      } else if (error.code === "auth/weak-password") {
+        setError("Email should be at least 6 characters");
       } else {
         setError("Failed to register: " + error.message);
       }
@@ -53,21 +54,30 @@ const Register = () => {
         <input
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setError();
+          }}
           placeholder="email"
           required
         />
         <input
           type="password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setError();
+          }}
           placeholder="password"
           required
         />
         <input
           type="password"
           value={password2}
-          onChange={(e) => setPassword2(e.target.value)}
+          onChange={(e) => {
+            setPassword2(e.target.value);
+            setError();
+          }}
           placeholder="confirm password"
           required
         />
