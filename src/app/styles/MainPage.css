@@ -1,0 +1,53 @@
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.back-btn {
+  animation: slideInFromBottom 0.5s ease-in-out 0.1s both;
+}
+
+.city-name {
+  animation: slideInFromBottom 0.5s ease-in-out 0.3s both;
+}
+
+.weather-info {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.weather-icon,
+.hourlyForecast {
+  animation: slideInFromBottom 0.5s ease-in-out 0.5s both;
+}
+
+.temperature,
+.dailyForecast {
+  animation: slideInFromBottom 0.5s ease-in-out 0.7s both;
+}
+
+.description {
+  animation: slideInFromBottom 0.5s ease-in-out 0.9s both;
+}
+
+.weather-details {
+  animation: slideInFromBottom 0.5s ease-in-out 1.1s both;
+}
+
+.view-details-link {
+  animation: slideInFromBottom 0.5s ease-in-out 1.3s both;
+}
