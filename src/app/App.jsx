@@ -9,7 +9,7 @@ const App = () => {
     <div>
       <Routes>
         <Route path="/" element={<MainPage />} />
-        <Route path="/weather/:city" element={<DetailedWeather />} />
+        <Route path="/weather/:city/:lat/:lon" element={<DetailedWeather />} />
       </Routes>
     </div>
   );
