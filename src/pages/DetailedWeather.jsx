@@ -4,25 +4,31 @@ import { getForecast } from "../shared/api/weather";
 
 const DetailedWeather = () => {
   const [forecast, setForecast] = useState(null);
-  const { city } = useParams();
+  const { city, lat, lon } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchForecast = async () => {
       try {
-        const forecastData = await getForecast(city);
+        const forecastData = await getForecast(lat, lon);
         setForecast(forecastData);
       } catch (error) {
         console.error("Error fetching forecast data: ", error);
       }
     };
     fetchForecast();
-  }, [city]);
+  }, [lat, lon]);
 
   if (!forecast) return <div>Loading...</div>;
 
   const dailyForecast = forecast.list.filter((item, index) => index % 8 === 0);
   const hourlyForecast = forecast.list.slice(0, 24);
+
+  const [cityName, stateName, countryName] =
+    decodeURIComponent(city).split(", ");
+  const newCityName = `${cityName}${
+    stateName ? `,\n${stateName}` : ""
+  }, ${countryName}`;
 
   const getWeatherIcon = (main) => {
     switch (main) {
@@ -59,7 +65,9 @@ const DetailedWeather = () => {
         </button>
 
         {/* City Name */}
-        <h2 className="text-5xl font-bold my-6 uppercase city-name">{city}</h2>
+        <h2 className="text-4xl font-bold my-6 uppercase city-name">
+          {newCityName}
+        </h2>
 
         {/* Hourly Forecast */}
         <div className="mb-10 hourlyForecast">

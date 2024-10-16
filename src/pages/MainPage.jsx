@@ -10,13 +10,20 @@ const MainPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleSearch(query);
+    if (suggestions.length > 0) {
+      handleSearch(suggestions[0]);
+    }
   };
 
   const handleSearch = async (city) => {
     try {
-      const weather = await getCurrentWeather(city);
-      setWeatherData(weather);
+      const weather = await getCurrentWeather(city.lat, city.lon);
+      setWeatherData({
+        ...weather,
+        fullName: `${city.name}, ${city.state || ""}, ${city.country}`,
+        lat: city.lat,
+        lon: city.lon,
+      });
       setAnimationKey((prev) => prev + 1);
       setSuggestions([]);
     } catch (error) {
@@ -26,7 +33,7 @@ const MainPage = () => {
   };
 
   const handleSuggestions = (suggestion) => {
-    handleSearch(suggestion.name);
+    handleSearch(suggestion);
     setSuggestions([]);
   };
 
@@ -78,7 +85,7 @@ const MainPage = () => {
       {/* Main Container */}
       <div
         className={`${
-          weatherData ? "h-[585px]" : "h-[105px] "
+          weatherData ? "h-[615px]" : "h-[105px] "
         } relative w-[400px] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all`}
       >
         {/* Search Container */}
@@ -110,7 +117,7 @@ const MainPage = () => {
               {suggestions.map((suggestion, index) => (
                 <li
                   key={index}
-                  onClick={(e) => handleSuggestions(suggestion, e)}
+                  onClick={() => handleSuggestions(suggestion)}
                   className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
                 >
                   {suggestion.name}
@@ -127,7 +134,8 @@ const MainPage = () => {
           <div key={animationKey} className="weather-info">
             {/* Searched City Name */}
             <div className="city-name text-center uppercase my-4 text-3xl font-semibold ">
-              <p>{weatherData.name}</p>
+              <p>{weatherData.fullName}</p>
+              {console.log(weatherData)}
             </div>
 
             {/* Weather Main Container */}
@@ -169,7 +177,9 @@ const MainPage = () => {
             {/* Link to Detail Page */}
             <div className="absolute bottom-5 left-5 right-5 view-details-link">
               <Link
-                to={`/weather/${weatherData.name}`}
+                to={`/weather/${encodeURIComponent(weatherData.fullName)}/${
+                  weatherData.lat
+                }/${weatherData.lon}`}
                 className="block w-full py-2.5 bg-white bg-opacity-20  text-center no-underline hover:bg-opacity-30 rounded-2xl"
               >
                 View Details
