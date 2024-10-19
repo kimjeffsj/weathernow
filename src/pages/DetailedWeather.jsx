@@ -2,33 +2,50 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getForecast } from "../shared/api/weather";
 
+import Loading from "../shared/ui/Loading";
+
 const DetailedWeather = () => {
   const [forecast, setForecast] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   const { city, lat, lon } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchForecast = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const forecastData = await getForecast(lat, lon);
         setForecast(forecastData);
       } catch (error) {
         console.error("Error fetching forecast data: ", error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchForecast();
   }, [lat, lon]);
 
-  if (!forecast) return <div>Loading...</div>;
+  let dailyForecast = [];
+  let hourlyForecast = [];
+  if (forecast && forecast.list) {
+    dailyForecast = forecast.list.filter((item, index) => index % 8 === 0);
+    hourlyForecast = forecast.list.slice(0, 24);
+  }
 
-  const dailyForecast = forecast.list.filter((item, index) => index % 8 === 0);
-  const hourlyForecast = forecast.list.slice(0, 24);
+  // const [cityName, stateName, countryName] =
+  //   decodeURIComponent(city).split(", ");
+  // const newCityName = `${cityName}${
+  //   stateName ? `,\n${stateName}` : ""
+  // }, ${countryName}`;
 
   const [cityName, stateName, countryName] =
     decodeURIComponent(city).split(", ");
-  const newCityName = `${cityName}${
-    stateName ? `,\n${stateName}` : ""
-  }, ${countryName}`;
+  const newCityName = [cityName, stateName, countryName]
+    .filter(Boolean)
+    .join(", ");
 
   const getWeatherIcon = (main) => {
     switch (main) {
@@ -55,7 +72,7 @@ const DetailedWeather = () => {
       style={{ backgroundImage: "url('/weatherIcon/background.jpg')" }}
     >
       {/* Main Container */}
-      <div className="my-5 w-[90%] md:w-[50%] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white">
+      <div className="my-5 w-[90%] md:w-[50%] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white transition-all duration-500 ease-in-out min-h-[600px]">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
@@ -69,68 +86,87 @@ const DetailedWeather = () => {
           {newCityName}
         </h2>
 
-        {/* Hourly Forecast */}
-        <div className="mb-10 hourlyForecast">
-          <h3 className="text-lg font-semibold mb-4">24 Hour Forecast</h3>
-          <div className="weather-details flex overflow-x-auto py-4 bg-gray-800 bg-opacity-50 rounded-lg">
-            {hourlyForecast.map((hour, index) => (
-              <div key={index} className="flex-shrink-0 w-20 text-center mx-2">
-                <p className="mb-2">{new Date(hour.dt * 1000).getHours()}:00</p>
-                <img
-                  src={getWeatherIcon(hour.weather[0].main)}
-                  alt="Weather Icon"
-                  className="w-8 h-6 mx-auto mb-2"
-                />
-                <p className="font-bold">{Math.round(hour.main.temp)}°C</p>
-              </div>
-            ))}
+        {loading ? (
+          <div className="h-[500px] flex items-center justify-center">
+            <Loading />
           </div>
-        </div>
+        ) : error ? (
+          <div className="h-[500px] flex items-center justify-center text-red-500">
+            {error}
+          </div>
+        ) : forecast ? (
+          <>
+            {/* Hourly Forecast */}
+            <div className="mb-10 hourlyForecast">
+              <h3 className="text-lg font-semibold mb-4">Hourly Forecast</h3>
+              <div className="weather-details flex overflow-x-auto py-4 bg-gray-800 bg-opacity-50 rounded-lg">
+                {hourlyForecast.map((hour, index) => (
+                  <div
+                    key={index}
+                    className="flex-shrink-0 w-20 text-center mx-2"
+                  >
+                    <p className="mb-2">
+                      {new Date(hour.dt * 1000).getHours()}:00
+                    </p>
+                    <img
+                      src={getWeatherIcon(hour.weather[0].main)}
+                      alt="Weather Icon"
+                      className="w-8 h-6 mx-auto mb-2"
+                    />
+                    <p className="font-bold">{Math.round(hour.main.temp)}°C</p>
+                  </div>
+                ))}
+              </div>
+            </div>
 
-        {/* 5 Day Forecast */}
-        <div className="dailyForecast">
-          <h3 className="text-lg font-semibold mb-4">5 Day Forecast</h3>
-          <div className="space-y-4 weather-details">
-            {dailyForecast.map((day, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between bg-gray-800 bg-opacity-50 rounded-lg p-4"
-              >
-                <div className="w-1/4">
-                  <p className="font-semibold">
-                    {new Date(day.dt * 1000).toLocaleDateString("en-US", {
-                      weekday: "short",
-                    })}
-                  </p>
-                  <p className="text-sm">
-                    {new Date(day.dt * 1000).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </p>
-                </div>
-                <div className="w-1/4 text-center">
-                  <img
-                    src={getWeatherIcon(day.weather[0].main)}
-                    alt="Weather Icon"
-                    className="w-8 h-6 mx-auto"
-                  />
-                  <p className="text-sm capitalize">
-                    {day.weather[0].description}
-                  </p>
-                </div>
-                <div className="w-1/4 text-center">
-                  <p className="font-bold">{Math.round(day.main.temp_max)}°C</p>
-                  <p className="text-sm">High</p>
-                </div>
-                <div className="w-1/4 text-center">
-                  <p>{Math.round(day.main.temp_min)}°C</p>
-                  <p className="text-sm">Low</p>
-                </div>
+            {/* 5 Day Forecast */}
+            <div className="dailyForecast">
+              <h3 className="text-lg font-semibold mb-4">5 Day Forecast</h3>
+              <div className="space-y-4 weather-details">
+                {dailyForecast.map((day, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-800 bg-opacity-50 rounded-lg p-4"
+                  >
+                    <div className="w-1/4">
+                      <p className="font-semibold">
+                        {new Date(day.dt * 1000).toLocaleDateString("en-US", {
+                          weekday: "short",
+                        })}
+                      </p>
+                      <p className="text-sm">
+                        {new Date(day.dt * 1000).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                    </div>
+                    <div className="w-1/4 text-center">
+                      <img
+                        src={getWeatherIcon(day.weather[0].main)}
+                        alt="Weather Icon"
+                        className="w-8 h-6 mx-auto"
+                      />
+                      <p className="text-sm capitalize">
+                        {day.weather[0].description}
+                      </p>
+                    </div>
+                    <div className="w-1/4 text-center">
+                      <p className="font-bold">
+                        {Math.round(day.main.temp_max)}°C
+                      </p>
+                      <p className="text-sm">High</p>
+                    </div>
+                    <div className="w-1/4 text-center">
+                      <p>{Math.round(day.main.temp_min)}°C</p>
+                      <p className="text-sm">Low</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          </>
+        ) : null}
       </div>
     </div>
   );

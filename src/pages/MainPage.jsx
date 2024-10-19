@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import { getCurrentWeather, citySuggestions } from "../shared/api/weather";
 import { Link } from "react-router-dom";
 
+import Loading from "../shared/ui/Loading";
+
 const MainPage = () => {
   const [query, setQuery] = useState("");
   const [weatherData, setWeatherData] = useState(null);
   const [animationKey, setAnimationKey] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,18 +20,24 @@ const MainPage = () => {
   };
 
   const handleSearch = async (city) => {
+    setLoading(true);
+    setError(null);
     try {
       const weather = await getCurrentWeather(city.lat, city.lon);
       setWeatherData({
         ...weather,
-        fullName: `${city.name}, ${city.state || ""}, ${city.country}`,
+        fullName: `${city.name}${city.state ? `, ${city.state}` : ""}, ${
+          city.country
+        }`,
         lat: city.lat,
         lon: city.lon,
       });
       setAnimationKey((prev) => prev + 1);
       setSuggestions([]);
     } catch (error) {
-      console.error("Error searching weather data: ", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
     setQuery("");
   };
@@ -58,11 +68,12 @@ const MainPage = () => {
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query) {
+        setError(null);
         try {
           const data = await citySuggestions(query);
           setSuggestions(data || []);
         } catch (error) {
-          console.error("Error fetching city suggestions: ", error);
+          setError(error.message);
           setSuggestions([]);
         }
       } else {
@@ -84,9 +95,9 @@ const MainPage = () => {
     >
       {/* Main Container */}
       <div
-        className={`${
-          weatherData ? "h-[615px]" : "h-[105px] "
-        } relative w-[400px] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all`}
+        className={`relative w-[400px] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all duration-300 ease-in-out ${
+          weatherData || loading ? "h-[615px]" : "h-[105px]"
+        }`}
       >
         {/* Search Container */}
         <div className="relative w-full max-w-md mx-auto">
@@ -98,14 +109,14 @@ const MainPage = () => {
                 setQuery(e.target.value);
               }}
               placeholder="ENTER YOUR LOCATION"
-              className="w-full h-14 bg-gray-800 bg-opacity-80  text-lg placeholder-gray-400 pl-12 pr-12 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500  uppercase"
+              className="w-full h-14 bg-gray-800 bg-opacity-80 text-lg placeholder-gray-400 pl-12 pr-12 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 uppercase"
             />
             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-              <i className="fas fa-location-dot  text-xl"></i>
+              <i className="fas fa-location-dot text-xl"></i>
             </div>
             <button
               type="submit"
-              className="absolute inset-y-0 right-3 flex items-center  hover:text-opacity-70"
+              className="absolute inset-y-0 right-3 flex items-center hover:text-opacity-70"
             >
               <i className="fas fa-magnifying-glass text-xl"></i>
             </button>
@@ -129,13 +140,20 @@ const MainPage = () => {
           )}
         </div>
 
-        {weatherData && (
+        {loading ? (
+          <div className="flex justify-center items-center h-[500px]">
+            <Loading />
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center h-[500px] text-red-500">
+            {error}
+          </div>
+        ) : weatherData ? (
           // Weather Container
-          <div key={animationKey} className="weather-info">
+          <div key={animationKey} className="weather-info mt-4">
             {/* Searched City Name */}
             <div className="city-name text-center uppercase my-4 text-3xl font-semibold ">
               <p>{weatherData.fullName}</p>
-              {console.log(weatherData)}
             </div>
 
             {/* Weather Main Container */}
@@ -180,13 +198,13 @@ const MainPage = () => {
                 to={`/weather/${encodeURIComponent(weatherData.fullName)}/${
                   weatherData.lat
                 }/${weatherData.lon}`}
-                className="block w-full py-2.5 bg-white bg-opacity-20  text-center no-underline hover:bg-opacity-30 rounded-2xl"
+                className="block w-full py-2.5 bg-white bg-opacity-20 text-center no-underline hover:bg-opacity-30 rounded-2xl"
               >
                 View Details
               </Link>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
