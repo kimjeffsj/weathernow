@@ -1,4 +1,6 @@
 import { Route, Routes } from "react-router-dom";
+
+import Layout from "../shared/ui/Layout";
 import MainPage from "../pages/MainPage";
 import DetailedWeather from "../pages/DetailedWeather";
 
@@ -8,8 +10,13 @@ const App = () => {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/weather/:city/:lat/:lon" element={<DetailedWeather />} />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<MainPage />} />
+          <Route
+            path="/weather/:city/:lat/:lon"
+            element={<DetailedWeather />}
+          />
+        </Route>
       </Routes>
     </div>
   );
