@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
-import { getCurrentWeather, citySuggestions } from "../shared/api/weather";
-import { Link } from "react-router-dom";
-import WeatherIcon from "../shared/ui/WeatherIcon";
+import { getCurrentWeather, citySuggestions } from "@/shared/api/weather";
+import { Link, useOutletContext } from "react-router-dom";
 
-import Loading from "../shared/ui/Loading";
+import WeatherIcon from "@/shared/ui/WeatherIcon";
+import Loading from "@/shared/ui/Loading";
+import AnimatedNumber from "@/shared/ui/AnimatedNumber";
 
 const MainPage = () => {
   const [query, setQuery] = useState("");
   const [weatherData, setWeatherData] = useState(null);
-  const [animationKey, setAnimationKey] = useState(0);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [contentHeight, setContentHeight] = useState("h-[105px]");
+  const [displayTemp, setDisplayTemp] = useState(null);
+
+  const { isCelsius } = useOutletContext();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -33,7 +37,6 @@ const MainPage = () => {
         lat: city.lat,
         lon: city.lon,
       });
-      setAnimationKey((prev) => prev + 1);
       setSuggestions([]);
     } catch (error) {
       setError(error.message);
@@ -68,12 +71,31 @@ const MainPage = () => {
     return () => clearTimeout(timer);
   }, [query]);
 
+  useEffect(() => {
+    if (loading) {
+      setContentHeight("h-[400px]");
+    } else if (error) {
+      setContentHeight("h-[200px]");
+    } else if (weatherData) {
+      setContentHeight("h-[605px]");
+    } else {
+      setContentHeight("h-[105px]");
+    }
+  }, [loading, error, weatherData]);
+
+  useEffect(() => {
+    if (weatherData) {
+      const temp = isCelsius
+        ? Math.round(weatherData.main.temp)
+        : Math.round((weatherData.main.temp * 9) / 5 + 32);
+      setDisplayTemp(temp);
+    }
+  }, [weatherData, isCelsius]);
+
   return (
-    // {/* Main Container */}
+    // Main Container
     <div
-      className={`relative w-[400px] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all duration-300 ease-in-out ${
-        weatherData || loading ? "h-[615px]" : "h-[105px]"
-      }`}
+      className={`relative w-[400px] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all duration-300 ease-in-out ${contentHeight}`}
     >
       {/* Search Container */}
       <div className="relative w-full max-w-md mx-auto">
@@ -121,12 +143,13 @@ const MainPage = () => {
           <Loading />
         </div>
       ) : error ? (
-        <div className="flex justify-center items-center h-[500px] text-red-500">
-          {error}
+        <div className="mt-4 p-4 bg-red-500 bg-opacity-70 text-white rounded-lg">
+          <p className="font-bold text-lg mb-2">Error:</p>
+          <p>{error}</p>
         </div>
       ) : weatherData ? (
         // Weather Container
-        <div key={animationKey} className="weather-info mt-4">
+        <div className="weather-info mt-4">
           {/* Searched City Name */}
           <div className="city-name text-center uppercase my-4 text-3xl font-semibold ">
             <p>{weatherData.fullName}</p>
@@ -138,9 +161,12 @@ const MainPage = () => {
               styling={"w-3/5 mx-auto"}
               main={weatherData.weather[0].main}
             />
-            <p className="text-6xl font-bold mt-5 mb-1.5 -ml-7.5 temperature">
-              {Math.round(weatherData.main.temp)}
-              <span className="absolute text-2xl ml-1">°C</span>
+            <p className="mt-5 mb-1.5">
+              <AnimatedNumber
+                val={displayTemp}
+                unit={`°${isCelsius ? "C" : "F"}`}
+                className="text-6xl font-bold"
+              />
             </p>
             <p className="text-2xl capitalize description">
               {weatherData.weather[0].description}

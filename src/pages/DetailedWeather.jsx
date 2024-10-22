@@ -1,17 +1,21 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getForecast } from "../shared/api/weather";
-import WeatherIcon from "../shared/ui/WeatherIcon";
+import { useParams, useNavigate, useOutletContext } from "react-router-dom";
+import { getForecast } from "@/shared/api/weather";
 
-import Loading from "../shared/ui/Loading";
+import WeatherIcon from "@/shared/ui/WeatherIcon";
+import Loading from "@/shared/ui/Loading";
+import AnimatedNumber from "@/shared/ui/AnimatedNumber";
 
 const DetailedWeather = () => {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [contentHeight, setContentHeight] = useState("min-h-[615px]");
+  const [displayTemp, setDisplayTemp] = useState("null");
 
   const { city, lat, lon } = useParams();
   const navigate = useNavigate();
+  const { isCelsius } = useOutletContext();
 
   useEffect(() => {
     const fetchForecast = async () => {
@@ -42,27 +46,45 @@ const DetailedWeather = () => {
     .filter(Boolean)
     .join(", ");
 
-  // const getWeatherIcon = (main) => {
-  //   switch (main) {
-  //     case "Clear":
-  //       return "/weatherIcon/clear.png";
-  //     case "Rain":
-  //       return "/weatherIcon/rain.png";
-  //     case "Snow":
-  //       return "/weatherIcon/snow.png";
-  //     case "Clouds":
-  //       return "/weatherIcon/cloud.png";
-  //     case "Mist":
-  //     case "Haze":
-  //       return "/weatherIcon/mist.png";
-  //     default:
-  //       return "/weatherIcon/cloud.png";
-  //   }
-  // };
+  useEffect(() => {
+    if (loading) {
+      setContentHeight("h-[615px]");
+    } else if (error) {
+      setContentHeight("min-h-[200px]");
+    } else if (forecast) {
+      setContentHeight("h-[860px]");
+    } else {
+      setContentHeight("min-h-[105px]");
+    }
+  }, [loading, error, forecast]);
+
+  useEffect(() => {
+    if (forecast?.list) {
+      const newTemps = {};
+      forecast.list.forEach((item, index) => {
+        const temp = isCelsius
+          ? Math.round(item.main.temp)
+          : Math.round((item.main.temp * 9) / 5 + 32);
+        const maxTemp = isCelsius
+          ? Math.round(item.main.temp_max)
+          : Math.round((item.main.temp_max * 9) / 5 + 32);
+        const minTemp = isCelsius
+          ? Math.round(item.main.temp_min)
+          : Math.round((item.main.temp_min * 9) / 5 + 32);
+
+        newTemps[`temp_${index}`] = temp;
+        newTemps[`max_temp_${index}`] = maxTemp;
+        newTemps[`min_temp_${index}`] = minTemp;
+      });
+      setDisplayTemp(newTemps);
+    }
+  }, [forecast, isCelsius]);
 
   return (
     // Main Container
-    <div className="my-5 w-[90%] md:w-[50%] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white transition-all duration-1000 ease-in-out min-h-[600px]">
+    <div
+      className={`relative mt-5 mb-8 w-[90%] md:w-[50%] bg-white bg-opacity-10 backdrop-blur-md border-2 border-white border-opacity-20 rounded-2xl p-5 text-white font-medium transition-all duration-300 ease-in-out ${contentHeight}`}
+    >
       {/* Back button */}
       <button
         onClick={() => navigate(-1)}
@@ -81,11 +103,12 @@ const DetailedWeather = () => {
           <Loading />
         </div>
       ) : error ? (
-        <div className="h-[500px] flex items-center justify-center text-red-500">
-          {error}
+        <div className="mt-4 p-4 bg-red-500 bg-opacity-70 text-white rounded-lg">
+          <p className="font-bold text-lg mb-2">Error:</p>
+          <p>{error}</p>
         </div>
       ) : forecast ? (
-        <>
+        <div className="detailed-container">
           {/* Hourly Forecast */}
           <div className="mb-10 hourlyForecast">
             <h3 className="text-lg font-semibold mb-4">Hourly Forecast</h3>
@@ -102,7 +125,11 @@ const DetailedWeather = () => {
                     main={hour.weather[0].main}
                     styling={"w-8 h-6 mx-auto mb-2"}
                   />
-                  <p className="font-bold">{Math.round(hour.main.temp)}°C</p>
+                  <AnimatedNumber
+                    val={displayTemp[`temp_${index}`]}
+                    unit={`°${isCelsius ? "C" : "F"}`}
+                    className="font-bold"
+                  />
                 </div>
               ))}
             </div>
@@ -140,20 +167,26 @@ const DetailedWeather = () => {
                     </p>
                   </div>
                   <div className="w-1/4 text-center">
-                    <p className="font-bold">
-                      {Math.round(day.main.temp_max)}°C
-                    </p>
+                    <AnimatedNumber
+                      val={displayTemp[`max_temp_${index}`]}
+                      unit={`°${isCelsius ? "C" : "F"}`}
+                      className="font-bold"
+                    />
                     <p className="text-sm">High</p>
                   </div>
                   <div className="w-1/4 text-center">
-                    <p>{Math.round(day.main.temp_min)}°C</p>
+                    <AnimatedNumber
+                      val={displayTemp[`min_temp_${index}`]}
+                      unit={`°${isCelsius ? "C" : "F"}`}
+                      className="font-bold"
+                    />
                     <p className="text-sm">Low</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
-        </>
+        </div>
       ) : null}
     </div>
   );
