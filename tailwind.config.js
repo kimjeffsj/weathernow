@@ -7,6 +7,7 @@ export default {
       animation: {
         "slide-up": "slideUp 0.3s ease-out forwards",
         "slide-down": "slideDown 0.3s ease-out forwards",
+        appear: "appear 0.3s ease-in-out forwards",
       },
       keyframes: {
         slideUp: {
@@ -16,6 +17,10 @@ export default {
         slideDown: {
           "0%": { transform: "translateY(100%)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        appear: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
         },
       },
       borderRadius: {
