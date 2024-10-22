@@ -3,14 +3,29 @@ import axios from "axios";
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 const BASE_URL = "https://api.openweathermap.org/";
 
-const handleApiError = (error, errorMessage) => {
-  console.error(errorMessage, error);
+const handleApiError = (error) => {
+  console.error("API Error:", error);
   if (error.response) {
-    throw new Error(`API Error: ${error.response.data.errorMessage}`);
+    switch (error.response.status) {
+      case 401:
+        throw new Error(
+          "Invalid API key. Please check your OpenWeatherMap API key."
+        );
+      case 404:
+        throw new Error(
+          "City not found. Please check the spelling and try again."
+        );
+      case 429:
+        throw new Error("Too many requests. Please try again later.");
+      default:
+        throw new Error(`An error occurred: ${error.response.data.message}`);
+    }
   } else if (error.request) {
-    throw new Error("Network Error: Unable to reach the server");
+    throw new Error(
+      "Unable to reach the weather service. Please check your internet connection."
+    );
   } else {
-    throw new Error("Error: " + error.message);
+    throw new Error("An unexpected error occurred. Please try again.");
   }
 };
 
@@ -27,7 +42,7 @@ const getCurrentWeather = async (lat, lon) => {
 
     return response.data;
   } catch (error) {
-    handleApiError(error, "Error Fetching weather data: ");
+    handleApiError(error);
   }
 };
 
@@ -44,7 +59,7 @@ const getForecast = async (lat, lon) => {
 
     return response.data;
   } catch (error) {
-    handleApiError(error, "Error fetching forecast data: ");
+    handleApiError(error);
   }
 };
 
@@ -61,7 +76,7 @@ const citySuggestions = async (cityName) => {
 
     return response.data;
   } catch (error) {
-    handleApiError(error, "Error fetching city suggestions.");
+    handleApiError(error);
   }
 };
 
