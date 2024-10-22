@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useOutletContext } from "react-router-dom";
-import { getForecast } from "@/shared/api/weather";
 
-import WeatherIcon from "@/shared/ui/WeatherIcon";
-import Loading from "@/shared/ui/Loading";
-import AnimatedNumber from "@/shared/ui/AnimatedNumber";
+import { getForecast } from "@/shared/api/weather";
+import { convertTemp, convertMaxMinTemp } from "@/shared/utils/convertTemp";
+
+import DetailedWeatherSkeleton from "@/components/weather/detailed/DetailedSkeleton";
+import HourlyForecast from "@/components/weather/detailed/HourlyForecast";
+import FiveDay from "@/components/weather/detailed/FiveDay";
 
 const DetailedWeather = () => {
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [contentHeight, setContentHeight] = useState("min-h-[615px]");
-  const [displayTemp, setDisplayTemp] = useState("null");
+  const [displayTemp, setDisplayTemp] = useState(null);
 
   const { city, lat, lon } = useParams();
   const navigate = useNavigate();
@@ -48,7 +50,7 @@ const DetailedWeather = () => {
 
   useEffect(() => {
     if (loading) {
-      setContentHeight("h-[615px]");
+      setContentHeight("h-[860px]");
     } else if (error) {
       setContentHeight("min-h-[200px]");
     } else if (forecast) {
@@ -62,19 +64,18 @@ const DetailedWeather = () => {
     if (forecast?.list) {
       const newTemps = {};
       forecast.list.forEach((item, index) => {
-        const temp = isCelsius
-          ? Math.round(item.main.temp)
-          : Math.round((item.main.temp * 9) / 5 + 32);
-        const maxTemp = isCelsius
-          ? Math.round(item.main.temp_max)
-          : Math.round((item.main.temp_max * 9) / 5 + 32);
-        const minTemp = isCelsius
-          ? Math.round(item.main.temp_min)
-          : Math.round((item.main.temp_min * 9) / 5 + 32);
+        const temp = convertTemp(item.main.temp, isCelsius);
+        const { max, min } = convertMaxMinTemp(
+          {
+            max: item.main.temp_max,
+            min: item.main.temp_min,
+          },
+          isCelsius
+        );
 
         newTemps[`temp_${index}`] = temp;
-        newTemps[`max_temp_${index}`] = maxTemp;
-        newTemps[`min_temp_${index}`] = minTemp;
+        newTemps[`max_temp_${index}`] = max;
+        newTemps[`min_temp_${index}`] = min;
       });
       setDisplayTemp(newTemps);
     }
@@ -99,8 +100,8 @@ const DetailedWeather = () => {
       </h2>
 
       {loading ? (
-        <div className="h-[500px] flex items-center justify-center">
-          <Loading />
+        <div className="h-[860px] flex items-center justify-center">
+          <DetailedWeatherSkeleton />
         </div>
       ) : error ? (
         <div className="mt-4 p-4 bg-red-500 bg-opacity-70 text-white rounded-lg">
@@ -110,81 +111,23 @@ const DetailedWeather = () => {
       ) : forecast ? (
         <div className="detailed-container">
           {/* Hourly Forecast */}
-          <div className="mb-10 hourlyForecast">
-            <h3 className="text-lg font-semibold mb-4">Hourly Forecast</h3>
-            <div className="weather-details flex overflow-x-auto py-4 bg-gray-800 bg-opacity-50 rounded-lg">
-              {hourlyForecast.map((hour, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 w-20 text-center mx-2"
-                >
-                  <p className="mb-2">
-                    {new Date(hour.dt * 1000).getHours()}:00
-                  </p>
-                  <WeatherIcon
-                    main={hour.weather[0].main}
-                    styling={"w-8 h-6 mx-auto mb-2"}
-                  />
-                  <AnimatedNumber
-                    val={displayTemp[`temp_${index}`]}
-                    unit={`°${isCelsius ? "C" : "F"}`}
-                    className="font-bold"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+          {displayTemp && (
+            <HourlyForecast
+              hourlyForecast={hourlyForecast}
+              displayTemp={displayTemp}
+              isCelsius={isCelsius}
+            />
+          )}
 
-          {/* 5 Day Forecast */}
           <div className="dailyForecast">
-            <h3 className="text-lg font-semibold mb-4">5 Day Forecast</h3>
-            <div className="space-y-4 weather-details">
-              {dailyForecast.map((day, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-gray-800 bg-opacity-50 rounded-lg p-4"
-                >
-                  <div className="w-1/4">
-                    <p className="font-semibold">
-                      {new Date(day.dt * 1000).toLocaleDateString("en-US", {
-                        weekday: "short",
-                      })}
-                    </p>
-                    <p className="text-sm">
-                      {new Date(day.dt * 1000).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-                  <div className="w-1/4 text-center">
-                    <WeatherIcon
-                      styling={"w-8 h-6 mx-auto"}
-                      main={day.weather[0].main}
-                    />
-                    <p className="text-sm capitalize">
-                      {day.weather[0].description}
-                    </p>
-                  </div>
-                  <div className="w-1/4 text-center">
-                    <AnimatedNumber
-                      val={displayTemp[`max_temp_${index}`]}
-                      unit={`°${isCelsius ? "C" : "F"}`}
-                      className="font-bold"
-                    />
-                    <p className="text-sm">High</p>
-                  </div>
-                  <div className="w-1/4 text-center">
-                    <AnimatedNumber
-                      val={displayTemp[`min_temp_${index}`]}
-                      unit={`°${isCelsius ? "C" : "F"}`}
-                      className="font-bold"
-                    />
-                    <p className="text-sm">Low</p>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* 5 Day Forecast */}
+            {displayTemp && (
+              <FiveDay
+                dailyForecast={dailyForecast}
+                displayTemp={displayTemp}
+                isCelsius={isCelsius}
+              />
+            )}
           </div>
         </div>
       ) : null}
