@@ -9,7 +9,7 @@ const WeatherInfo = ({ weatherData, displayTemp, isCelsius }) => {
         styling={"w-3/5 mx-auto"}
         main={weatherData.weather[0].main}
       />
-      <div className="mt-5 mb-1.5">
+      <div className="mt-5 mb-1">
         <AnimatedNumber
           val={displayTemp}
           unit={`°${isCelsius ? "C" : "F"}`}
