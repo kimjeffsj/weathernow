@@ -52,7 +52,10 @@ VITE_OPENWEATHER_API_KEY=YOUR_OPENWEATHER_API_KEY
 
 ```
 
-Make sure to replace the placeholder values with your actual configuration.
+You may get free API key from this link below(sign up required)
+https://openweathermap.org/price
+
+Make sure to replace the `YOUR_OPENWEATHER_API_KEY` values with your actual API key.
 
 To run the app in dev mode:
 
