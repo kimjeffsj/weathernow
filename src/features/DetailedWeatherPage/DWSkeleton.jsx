@@ -1,16 +1,9 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-const DetailedWeatherSkeleton = () => {
+const DetailedSkeleton = () => {
   return (
-    <div className="space-y-6 w-full animate-pulse">
-      {/* Back Button */}
-      <Skeleton className="h-8 w-24 bg-white/20" />
-
-      {/* City Name */}
-      <Skeleton className="h-10 w-3/4 bg-white/20" />
-
-      {/* Hourly Forecast */}
-      <div className="mt-8">
+    <div className="space-y-8 w-full p-5">
+      <div className="space-y-4">
         <Skeleton className="h-6 w-40 mb-4 bg-white/20" />
         <div className="flex gap-4 overflow-x-auto py-4">
           {[1, 2, 3, 4, 5, 6].map((item) => (
@@ -27,7 +20,7 @@ const DetailedWeatherSkeleton = () => {
       </div>
 
       {/* 5 Day Forecast Skeleton */}
-      <div className="mt-8">
+      <div className="space-y-4">
         <Skeleton className="h-6 w-48 mb-4 bg-white/20" />
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map((item) => (
@@ -43,4 +36,4 @@ const DetailedWeatherSkeleton = () => {
   );
 };
 
-export default DetailedWeatherSkeleton;
+export default DetailedSkeleton;

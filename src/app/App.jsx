@@ -1,8 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 
 import Layout from "@/shared/ui/Layout";
-import MainPage from "@/pages/MainPage";
-import DetailedWeather from "@/pages/DetailedWeather";
+import MainPage from "@/features/MainPage/MainPage";
+import DetailedWeather from "@/features/DetailedWeatherPage/DetailedWeatherPage";
 import Navbar from "@/shared/ui/Navbar";
 
 import "@/app/styles/index.css";
