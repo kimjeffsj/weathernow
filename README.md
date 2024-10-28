@@ -94,7 +94,8 @@ The project utilizes several external libraries to enhance functionality and sty
 
 ## <a id="license">**License**</a>
 
-Distributed under the MIT License. See `LICENSE` for more information.
+License: MIT
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## <a id="contact">**Contact**</a>
 
